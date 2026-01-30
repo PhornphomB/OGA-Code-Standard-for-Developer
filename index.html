@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OGA Master Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&平衡display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="oga-styles.css">
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 md:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200">O</div>
+                    <div class="font-bold text-xl text-slate-800 uppercase tracking-tight">OGA <span class="text-blue-600 font-black">Standard</span></div>
+                </div>
+                <div class="flex h-full items-center">
+                    <button onclick="switchTab('naming')" id="tabNaming" class="tab-btn tab-active">Naming Tool</button>
+                    <button onclick="switchTab('spec')" id="tabSpec" class="tab-btn">Naming Spec</button>
+                    <button onclick="switchTab('folder')" id="tabFolder" class="tab-btn">Folder Structure</button>
+                    <button onclick="switchTab('ai')" id="tabAi" class="tab-btn">Generate DTO</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6 md:p-10">
+        
+        <section id="contentNaming" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="card p-8">
+                        <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <span class="text-blue-600 font-normal">🛠️</span> Logic Configuration
+                        </h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="label-mini">Logical Name (Database Field Name)</label>
+                                <input type="text" id="mainInput" oninput="runNamingTool()" 
+                                       placeholder="เช่น item_master_id หรือ uom_code" 
+                                       class="oga-input text-lg font-medium focus:ring-4 focus:ring-blue-100">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label-mini">Platform & UI Control</label>
+                                    <select id="uiSel" onchange="runNamingTool()" class="oga-select">
+                                        <optgroup label="Web / Windows">
+                                            <option value="txt">TextBox (txt)</option>
+                                            <option value="btn">Button (btn)</option>
+                                            <option value="ddl">DropDownList (ddl)</option>
+                                            <option value="dgv">DataGridView (dgv)</option>
+                                            <option value="lbl">Label (lbl)</option>
+                                            <option value="chk">CheckBox (chk)</option>
+                                            <option value="dtp">DateTimePicker (dtp)</option>
+                                        </optgroup>
+                                        <optgroup label="Android Mobile">
+                                            <option value="txt">EditText (txt)</option>
+                                            <option value="btn">Button (btn)</option>
+                                            <option value="lbl">TextView (lbl)</option>
+                                            <option value="ddl">Spinner (ddl)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="label-mini">SQL Data Type</label>
+                                    <select id="sqlType" onchange="runNamingTool()" class="oga-select">
+                                        <option value="vch">Varchar / Guid (vch)</option>
+                                        <option value="int">Integer (int)</option>
+                                        <option value="dec">Decimal (dec)</option>
+                                        <option value="dt">DateTime (dt)</option>
+                                        <option value="bit">Boolean (bit)</option>
+                                        <option value="tbl">Table Variable (tbl)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="label-mini">SQL Variable Direction</label>
+                                <div class="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="sqlDir" value="v_" checked onchange="runNamingTool()" class="hidden peer">
+                                        <div class="radio-btn peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm">Local (@v_)</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="sqlDir" value="in_" onchange="runNamingTool()" class="hidden peer">
+                                        <div class="radio-btn peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm">IN (@in_)</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="sqlDir" value="out_" onchange="runNamingTool()" class="hidden peer">
+                                        <div class="radio-btn peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm">OUT (@out_)</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-100 p-5 rounded-2xl">
+                        <h4 class="text-blue-800 text-[11px] font-bold uppercase tracking-widest mb-2 flex items-center">
+                            <span class="mr-2">💡</span> Naming Exceptions (Rule #36)
+                        </h4>
+                        <p class="text-xs text-blue-900 leading-relaxed">
+                            กรณีที่เป็น <span class="font-bold">ID</span> และรวมถึงตัวย่อ เช่น <span class="font-bold">UOM, BOM, ERP</span> กำหนดให้ใช้ <span class="underline">ตัวพิมพ์ใหญ่ทั้งหมด</span> 
+                        </p>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 space-y-4">
+                    <h3 class="text-slate-500 text-[10px] font-bold uppercase tracking-widest px-2">Generated Standards</h3>
+                    
+                    <div class="output-card border-l-4 border-blue-500 group">
+                        <div>
+                            <p class="output-label text-blue-500">UI Component ID</p>
+                            <span id="resUI" class="mono text-2xl font-medium">-</span>
+                        </div>
+                        <button onclick="copyToClipboard('resUI')" class="copy-btn group-hover:opacity-100 bg-blue-600">COPY</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="output-card border-l-4 border-red-500 group">
+                            <div>
+                                <p class="output-label text-red-500">SQL Variable</p>
+                                <span id="resSQL" class="mono text-xl">-</span>
+                            </div>
+                            <button onclick="copyToClipboard('resSQL')" class="copy-btn group-hover:opacity-100 bg-red-600">COPY</button>
+                        </div>
+
+                        <div class="output-card border-l-4 border-emerald-500 group">
+                            <div>
+                                <p class="output-label text-emerald-500">Private Internal</p>
+                                <span id="resPriv" class="mono text-xl">-</span>
+                            </div>
+                            <button onclick="copyToClipboard('resPriv')" class="copy-btn group-hover:opacity-100 bg-emerald-600">COPY</button>
+                        </div>
+                    </div>
+
+                    <div class="output-card border-l-4 border-orange-500 group bg-slate-800">
+                        <div>
+                            <p class="output-label text-orange-400">Variable Parameter List</p>
+                            <span id="resParam" class="mono text-2xl text-white font-light tracking-wide">-</span>
+                        </div>
+                        <button onclick="copyToClipboard('resParam')" class="copy-btn group-hover:opacity-100 bg-orange-500">COPY</button>
+                    </div>
+
+                    <p class="text-[10px] text-slate-400 text-center italic mt-4">อ้างอิงตามคู่มือ OGA Application Coding Standards</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contentSpec" class="tab-content hidden">
+    <div class="space-y-10">
+        
+        <div class="card overflow-hidden border-t-4 border-t-blue-600">
+            <div class="p-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-8 flex items-center gap-3">
+                    <span class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm shadow-lg shadow-blue-100">01</span>
+                    Application Coding Standards
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                    <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                        <h3 class="text-blue-700 font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full"></span> General Rules
+                        </h3>
+                        <ul class="space-y-4">
+                            <li class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                                <span class="text-xs font-semibold text-slate-500">Class Name:</span>
+                                <span class="mono text-[13px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded">UpperCamelCase</span>
+                            </li>
+                            <li class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                                <span class="text-xs font-semibold text-slate-500">General Function:</span>
+                                <span class="mono text-[13px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded">GetOutboundOrder()</span>
+                            </li>
+                            <li class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                                <span class="text-xs font-semibold text-slate-500">Event Function:</span>
+                                <span class="mono text-[13px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded">btnSave_Click()</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                        <h3 class="text-blue-700 font-bold text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Variable Entity Data
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                <p class="text-[12px]"><strong class="text-slate-700">Database:</strong> <span class="mono text-blue-600 ml-1">snake_case_name</span></p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                <p class="text-[12px]"><strong class="text-slate-700">Public:</strong> <span class="mono text-blue-600 ml-1">PascalCaseName</span></p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                <p class="text-[12px]"><strong class="text-slate-700">Private:</strong> <span class="mono text-blue-600 ml-1">camelCaseName</span></p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                <p class="text-[12px]"><strong class="text-slate-700">Parameter:</strong> <span class="mono text-blue-600 ml-1">_underScoreCamel</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-hidden border border-slate-100 rounded-2xl shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-800 text-white text-[11px] uppercase tracking-wider">
+                            <tr>
+                                <th class="px-6 py-4">UI Control (Win/Web)</th>
+                                <th class="px-6 py-4 text-orange-400">Prefix</th>
+                                <th class="px-6 py-4">Mobile (Android)</th>
+                                <th class="px-6 py-4 text-orange-400">Prefix</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-[12px] divide-y divide-slate-100 font-medium text-slate-600">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-3">Label / TextView</td>
+                                <td class="px-6 py-3 mono font-bold text-blue-600">lbl</td>
+                                <td class="px-6 py-3">Button</td>
+                                <td class="px-6 py-3 mono font-bold text-blue-600">btn</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-3">TextBox / EditText</td>
+                                <td class="px-6 py-3 mono font-bold text-blue-600">txt</td>
+                                <td class="px-6 py-3">CheckBox</td>
+                                <td class="px-6 py-3 mono font-bold text-blue-600">chk</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-3">DropDownList / Spinner</td>
+                                <td class="px-6 py-3 mono font-bold text-blue-600">ddl</td>
+                                <td class="px-6 py-3">RadioButton</td>
+                                <td class="px-6 py-3 mono font-bold text-blue-600">rdo</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-3">DataGrid / ListView</td>
+                                <td class="px-6 py-3 mono font-bold text-blue-600">dgv/lst</td>
+                                <td class="px-6 py-3">ImageButton</td>
+                                <td class="px-6 py-3 mono font-bold text-blue-600">imb/img</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-slate-900 border-none overflow-hidden shadow-2xl">
+            <div class="p-8 border-l-8 border-orange-500">
+                <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                    <span class="bg-orange-500 text-white rounded-xl px-3 py-1 text-sm">02</span>
+                    Database Object Coding Standards 
+                </h2>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                            <span class="text-slate-400 text-[10px] font-bold uppercase">Table Name</span>
+                            <span class="mono text-orange-400 font-bold text-xs">t_[name] (lowercase)</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                            <span class="text-slate-400 text-[10px] font-bold uppercase">Store Procedure</span>
+                            <span class="mono text-orange-400 font-bold text-xs">usp_[name]</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                            <span class="text-slate-400 text-[10px] font-bold uppercase">View Name</span>
+                            <span class="mono text-orange-400 font-bold text-xs">v_[name]</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                            <span class="text-slate-400 text-[10px] font-bold uppercase">Function Name</span>
+                            <span class="mono text-orange-400 font-bold text-xs">usf_[name] </span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                        <p class="text-[11px] text-blue-400 font-bold mb-3 tracking-widest">SQL VARIABLE FORMAT </p>
+                        <p class="mono text-xl text-white mb-2">@v_<span class="text-orange-400">[DataTypePrefix]</span>[Name]</p>
+                        <p class="text-[10px] text-slate-500 leading-relaxed">
+                            ตัวอย่าง: <span class="text-orange-300">@v_vchItemNumber</span>, <span class="text-orange-300">@v_intQuantity</span> <br>
+                            * ชื่อตัวแปรส่วนหลังขึ้นต้นด้วยตัวพิมพ์ใหญ่ 
+                        </p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-700">
+                    <table class="w-full text-left font-mono text-[11px]">
+                        <thead class="bg-slate-800 text-slate-400 uppercase">
+                            <tr>
+                                <th class="px-6 py-4">SQL Data Type </th>
+                                <th class="px-6 py-4 text-orange-400">Prefix </th>
+                                <th class="px-6 py-4">Example </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 text-slate-300">
+                            <tr><td class="px-6 py-2">NVARCHAR / VARCHAR / GUID</td><td class="px-6 py-2 text-orange-400">vch</td><td class="px-6 py-2">v_vchName</td></tr>
+                            <tr><td class="px-6 py-2">DATETIME / DATE</td><td class="px-6 py-2 text-orange-400">dt</td><td class="px-6 py-2">v_dtName</td></tr>
+                            <tr><td class="px-6 py-2">DECIMAL</td><td class="px-6 py-2 text-orange-400">dec</td><td class="px-6 py-2">v_decName</td></tr>
+                            <tr><td class="px-6 py-2">FLOAT</td><td class="px-6 py-2 text-orange-400">flt</td><td class="px-6 py-2">v_fltName</td></tr>
+                            <tr><td class="px-6 py-2">BIT (Boolean)</td><td class="px-6 py-2 text-orange-400">bit</td><td class="px-6 py-2">v_bitName</td></tr>
+                            <tr><td class="px-6 py-2">IMAGE</td><td class="px-6 py-2 text-orange-400">bit</td><td class="px-6 py-2">v_imgName</td></tr>
+                            <tr><td class="px-6 py-2">INT / BIGINT (ใช้มาตรฐานเดียวกัน)</td><td class="px-6 py-2 text-orange-400">int</td><td class="px-6 py-2">v_intQuantity</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 flex flex-wrap gap-4 justify-center">
+                    <span class="text-[10px] bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700 italic">
+                        * ยกเว้น ID, UOM, BOM, ERP ให้ใช้ตัวพิมพ์ใหญ่ 
+                    </span>
+                    <span class="text-[10px] bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700 italic">
+                        * Column Name ใช้ตัวพิมพ์เล็กคั่นด้วย "_" 
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="contentFolder" class="tab-content hidden">
+    <div class="space-y-10">
+        
+        <div class="border-b-4 border-blue-600 pb-6">
+            <h2 class="text-3xl font-black text-slate-900 uppercase tracking-tight">OGA Project Documents Folder Standards</h2>
+            <p class="text-blue-600 font-bold mt-1 flex items-center gap-2">
+                <span class="w-2 h-6 bg-blue-600 rounded-full"></span>
+                Section: Project Documents Folder Structure & Best Practices
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-8 space-y-8">
+                
+                <div class="card p-8 border-t-4 border-t-blue-600">
+                    <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                        <span class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-lg shadow-blue-100">📍</span>
+                        Project Documents Folder Path
+                    </h3>
+                    <div class="space-y-6">
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col items-center justify-center text-center">
+                            <p class="text-sm text-slate-500 mb-3">โปรเจกต์ทุกตัวที่ตกลงจะ Implement จะต้องถูกจัดเก็บที่:</p>
+                            <code class="text-blue-700 font-bold bg-white border border-blue-100 px-4 py-2 rounded-lg shadow-sm text-sm sm:text-base">
+                                \\10.10.10.217\programer$\BS_Project
+                            </code>
+                        </div>
+                        
+                        <div class="bg-amber-50 p-5 rounded-2xl border border-amber-200 flex items-start gap-4">
+                            <span class="text-2xl">💡</span>
+                            <p class="text-xs text-amber-800 leading-relaxed">
+                                <strong class="block mb-1 text-sm text-amber-900">เมื่อมีโปรเจกต์ใหม่:</strong>
+                                ให้ Copy ที่ Folder <span class="underline font-bold text-amber-900">Project Customer Template</span> แล้วเปลี่ยนเป็นชื่อบริษัทของลูกค้า (เช่น บูรพา อุตสาหกรรม)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card overflow-hidden">
+                    <div class="bg-slate-800 p-5 flex justify-between items-center">
+                        <h3 class="text-white font-bold flex items-center gap-3">
+                            <span class="text-xl">📂</span> Project Documents Folder Structure
+                        </h3>
+                        <span class="text-slate-400 text-[10px] uppercase tracking-widest font-mono">Hierarchy View</span>
+                    </div>
+                    
+                    <div class="p-8 space-y-10">
+                        <div class="relative pl-10 border-l-2 border-dashed border-slate-200">
+                            <div class="absolute -left-[11px] top-0 w-5 h-5 bg-blue-600 rounded-full border-4 border-white shadow-sm"></div>
+                            <h4 class="font-bold text-blue-700 text-xs uppercase tracking-widest mb-3">ชั้นที่ 1: Project Name</h4>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 font-mono text-sm">
+                                <span class="text-slate-400">Example:</span> <span class="text-slate-800 font-bold">YYYY Project Name</span> <span class="text-slate-400 text-xs ml-2">(e.g. 2020 WM3)</span>
+                            </div>
+                        </div>
+
+                        <div class="relative pl-10 border-l-2 border-dashed border-slate-200">
+                            <div class="absolute -left-[11px] top-0 w-5 h-5 bg-blue-600 rounded-full border-4 border-white shadow-sm"></div>
+                            <h4 class="font-bold text-blue-700 text-xs uppercase tracking-widest mb-3">ชั้นที่ 2: ประเภทเอกสาร (Main Categories)</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
+                                <div class="bg-blue-50 text-blue-700 p-3 border border-blue-100 rounded-xl text-center font-bold shadow-sm">01 Document</div>
+                                <div class="bg-blue-50 text-blue-700 p-3 border border-blue-100 rounded-xl text-center font-bold shadow-sm">02 SourceCode</div>
+                                <div class="bg-blue-50 text-blue-700 p-3 border border-blue-100 rounded-xl text-center font-bold shadow-sm">03 Deliverable</div>
+                            </div>
+                        </div>
+
+                        <div class="relative pl-10">
+                            <div class="absolute -left-[11px] top-0 w-5 h-5 bg-blue-600 rounded-full border-4 border-white shadow-sm"></div>
+                            <h4 class="font-bold text-blue-700 text-xs uppercase tracking-widest mb-5">ชั้นที่ 3: รายละเอียด Folder ย่อย</h4>
+                            
+                            <div class="space-y-6">
+                                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <span class="bg-slate-800 text-white px-3 py-1 rounded-lg text-[10px] font-bold">01</span>
+                                        <span class="font-bold text-slate-800 text-sm">Document (จัดเก็บเอกสาร Project)</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-4 text-[11px] text-slate-600 font-mono">
+                                        <div class="flex items-center gap-2">📂 01 Statement of Work</div>
+                                        <div class="flex items-center gap-2">📂 02 Kick Off</div>
+                                        <div class="flex items-center gap-2">📂 03 Meeting Record</div>
+                                        <div class="flex items-center gap-2">📂 04 Req. & Design</div>
+                                        <div class="flex items-center gap-2">📂 05 UAT_SIT</div>
+                                        <div class="flex items-center gap-2">📂 06 Training</div>
+                                        <div class="flex items-center gap-2">📂 07 Change Request</div>
+                                        <div class="flex items-center gap-2">📂 08 Acceptance</div>
+                                        <div class="flex items-center gap-2 font-bold text-blue-600">📁 10 Manual</div>
+                                        <div class="flex items-center gap-2 font-bold text-blue-600 italic underline">📁 11 Maintenance</div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="bg-slate-400 text-white px-2 py-0.5 rounded text-[10px] font-bold">02</span>
+                                            <span class="font-bold text-slate-800 text-sm">SourceCode</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 italic ml-10">จัดเก็บ Source Code ทั้งหมด</p>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <span class="bg-slate-400 text-white px-2 py-0.5 rounded text-[10px] font-bold">03</span>
+                                            <span class="font-bold text-slate-800 text-sm">Deliverable</span>
+                                        </div>
+                                        <div class="ml-10 space-y-1 text-[11px] text-slate-600 font-mono">
+                                            <div>📦 01 Document</div>
+                                            <div>📦 02 Program Setup</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 space-y-6">
+                <div class="card bg-slate-900 border-none overflow-hidden shadow-2xl">
+                    <div class="p-6">
+                        <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 mb-8 flex items-center gap-3">
+                            <span class="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400">💻</span> 
+                            System Path View
+                        </h3>
+                        <div class="space-y-8 font-mono text-[11px]">
+                            <div class="pb-6 border-l border-slate-800 ml-2 pl-4 relative">
+                                <div class="absolute -left-1.5 top-0 w-3 h-3 bg-green-500 rounded-full"></div>
+                                <p class="text-slate-500 mb-3 text-[10px]">// Network Root</p>
+                                <div class="flex items-center text-green-400 font-bold mb-4">
+                                    <span class="mr-2 text-base">📁</span> BS_Project
+                                </div>
+                                <div class="ml-2 space-y-4">
+                                    <div class="flex items-center text-amber-400">
+                                        <span class="mr-2 text-slate-700">┗ 📁</span> [ชื่อลูกค้า]
+                                    </div>
+                                    <div class="ml-6 flex items-center text-blue-400">
+                                        <span class="mr-2 text-slate-700">┗ 📁</span> 2020 WM3
+                                    </div>
+                                    <div class="ml-12 space-y-2 text-slate-400 text-[10px]">
+                                        <div class="flex items-center gap-2"><span class="text-slate-700">┗</span> 📂 01 Document</div>
+                                        <div class="flex items-center gap-2"><span class="text-slate-700">┗</span> 📂 02 SourceCode</div>
+                                        <div class="flex items-center gap-2"><span class="text-slate-700">┗</span> 📂 03 Deliverable</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-red-50 p-8 rounded-3xl border-2 border-red-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 text-6xl opacity-10 grayscale">🛑</div>
+                    <div class="flex items-center text-red-700 mb-4 gap-3">
+                        <span class="bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">!</span>
+                        <span class="font-black text-sm uppercase tracking-wider">Important Rule</span>
+                    </div>
+                    <p class="text-[12px] text-red-900 leading-relaxed font-bold">
+                        "โปรเจกต์ทุกตัวที่ตกลงจะ Implement ให้กับลูกค้า 
+                        <span class="underline decoration-red-400 decoration-2 underline-offset-4">จะต้องถูกจัดเก็บใน Server กลางเสมอ</span> 
+                        เพื่อความปลอดภัยและการส่งมอบงาน"
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+        <section id="contentAi" class="tab-content hidden">
+    <div class="space-y-6">
+        <div class="card overflow-hidden border-t-4 border-t-emerald-500">
+            <div class="p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-bold text-xl text-slate-800 flex items-center gap-3">
+                        <span class="bg-emerald-500 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-lg shadow-emerald-100">⚡</span>
+                        Quick Code Generator
+                    </h3>
+                    <span class="text-[10px] bg-slate-100 text-slate-500 px-3 py-1 rounded-full font-bold uppercase tracking-widest">Auto-DTO Mapping</span>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Input Raw Fields (One per line)</label>
+                    <textarea id="aiRawInput" rows="6" 
+                        class="w-full p-4 font-mono text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none" 
+                        placeholder="item_id&#10;item_name&#10;created_date"></textarea>
+                </div>
+
+                <div class="flex justify-center mb-8">
+                    <button onclick="aiProcessCode()" 
+                        class="group bg-slate-900 hover:bg-emerald-600 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-xl hover:shadow-emerald-200 flex items-center gap-3">
+                        <span>Generate C# DTO</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="relative group">
+                    <div class="absolute top-0 right-0 p-3 flex gap-2 z-10">
+                        <span class="text-[10px] text-slate-500 font-mono bg-slate-800/50 backdrop-blur px-2 py-1 rounded border border-white/10 text-white/50">C# DTO Class</span>
+                        <button onclick="copyToClipboard('aiResult')" 
+                            class="bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] font-bold px-3 py-1 rounded shadow-lg transition-colors flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                            Copy Code
+                        </button>
+                    </div>
+                    <pre id="aiResult" 
+                        class="p-8 bg-slate-900 text-emerald-400 rounded-3xl overflow-auto text-xs min-h-[180px] border border-slate-700 shadow-2xl font-mono leading-relaxed"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    </main>
+
+    <script src="oga-generator.js"></script>
+</body>
+</html>
